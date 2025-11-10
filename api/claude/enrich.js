@@ -6,6 +6,12 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  console.log('[INFO] Request received:', {
+    method: req.method,
+    headers: req.headers,
+    hasBody: !!req.body
+  });
+
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -25,7 +31,11 @@ module.exports = async (req, res) => {
 
   // Only allow POST requests for enrichment
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    console.error('[ERROR] Invalid method:', req.method);
+    return res.status(405).json({ 
+      error: `Method ${req.method} not allowed. Expected POST.`,
+      received: req.method
+    });
   }
 
   const apiKey = process.env.CLAUDE_API_KEY;
