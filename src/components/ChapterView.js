@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaBook } from 'react-icons/fa';
 import { getChapterData } from '../data/chaptersData';
@@ -7,13 +7,83 @@ const ChapterView = ({ language }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const chapterData = getChapterData(parseInt(id));
+  const [aiEnrichment, setAiEnrichment] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
 
   const translations = {
-    en: { back: 'Back to Chapters', summary: 'Chapter Summary', keyPoints: 'Key Points', questions: 'Practice Questions' },
-    bg: { back: 'Назад към Главите', summary: 'Резюме на Главата', keyPoints: 'Ключови Точки', questions: 'Практически Въпроси' }
+    en: {
+      back: 'Back to Chapters',
+      summary: 'Chapter Summary',
+      keyPoints: 'Key Points',
+      questions: 'Practice Questions',
+      claudeTitle: 'Claude Deep Dive',
+      claudeSubtitle: 'Get additional insights and exam-ready context powered by Claude.',
+      claudeButton: 'Enrich with Claude',
+      claudeLoading: 'Requesting deeper insights…',
+      claudeError: 'Unable to retrieve additional details right now.',
+      claudeRetry: 'Try again'
+    },
+    bg: {
+      back: 'Назад към Главите',
+      summary: 'Резюме на Главата',
+      keyPoints: 'Ключови Точки',
+      questions: 'Практически Въпроси',
+      claudeTitle: 'Разширен Анализ от Claude',
+      claudeSubtitle: 'Обогатете съдържанието с допълнителни пояснения и контекст за изпита.',
+      claudeButton: 'Обогати с Claude',
+      claudeLoading: 'Заявката се обработва…',
+      claudeError: 'В момента не може да се извлече допълнителна информация.',
+      claudeRetry: 'Опитайте отново'
+    }
   };
 
   const t = translations[language];
+
+  const handleClaudeEnrichment = async () => {
+    try {
+      setAiLoading(true);
+      setAiError('');
+      setAiEnrichment('');
+
+      const response = await fetch('/api/claude/enrich', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          chapterNumber: parseInt(id, 10),
+          summary: chapterData.summary[language],
+          language
+        })
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody?.error || 'Claude enrichment failed');
+      }
+
+      const data = await response.json();
+      setAiEnrichment(data.enrichment || '');
+    } catch (error) {
+      setAiError(error.message || 'Unknown error');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const renderEnrichment = () => {
+    if (!aiEnrichment) return null;
+
+    return aiEnrichment
+      .split('\n')
+      .filter(paragraph => paragraph.trim().length > 0)
+      .map((paragraph, idx) => (
+        <p key={`${idx}-${paragraph.slice(0, 20)}`} style={{ marginBottom: '1rem', lineHeight: '1.8' }}>
+          {paragraph}
+        </p>
+      ));
+  };
 
   return (
     <div>
@@ -94,6 +164,81 @@ const ChapterView = ({ language }) => {
           </ul>
         </div>
       )}
+
+      {/* Claude Enrichment Section */}
+      <div style={{
+        marginTop: '2rem',
+        padding: '2.5rem',
+        background: '#ffffff',
+        borderRadius: '12px',
+        border: '2px dashed #cbd5f5',
+        boxShadow: '0 12px 24px rgba(102, 126, 234, 0.08)'
+      }}>
+        <h3 style={{
+          color: '#1a5490',
+          marginBottom: '0.75rem',
+          fontSize: '1.5rem'
+        }}>
+          🤖 {t.claudeTitle}
+        </h3>
+        <p style={{ color: '#4a4a4a', marginBottom: '1.5rem', fontSize: '1rem' }}>
+          {t.claudeSubtitle}
+        </p>
+        <button
+          className="btn btn-primary"
+          onClick={handleClaudeEnrichment}
+          disabled={aiLoading}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.75rem 1.5rem',
+            background: aiLoading ? '#6c757d' : '#667eea',
+            border: 'none',
+            borderRadius: '999px',
+            fontSize: '1rem',
+            cursor: aiLoading ? 'wait' : 'pointer'
+          }}
+        >
+          {aiLoading ? t.claudeLoading : t.claudeButton}
+        </button>
+
+        {aiError && (
+          <div style={{
+            marginTop: '1.5rem',
+            padding: '1rem',
+            background: '#fff5f5',
+            border: '1px solid #ffcccc',
+            borderRadius: '8px',
+            color: '#d14343'
+          }}>
+            <strong>{t.claudeError}</strong>
+            <div style={{ marginTop: '0.5rem' }}>
+              <button
+                className="btn btn-link"
+                onClick={handleClaudeEnrichment}
+                disabled={aiLoading}
+                style={{ color: '#d14343', textDecoration: 'underline', border: 'none', background: 'transparent', padding: 0 }}
+              >
+                {t.claudeRetry}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {aiEnrichment && (
+          <div style={{
+            marginTop: '1.75rem',
+            padding: '1.75rem',
+            background: '#f0f4ff',
+            borderRadius: '12px',
+            border: '1px solid rgba(102,126,234,0.35)',
+            color: '#1f2d5c'
+          }}>
+            {renderEnrichment()}
+          </div>
+        )}
+      </div>
 
       {/* Questions Section */}
       {chapterData.questions && chapterData.questions.length > 0 && (

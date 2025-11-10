@@ -1,23 +1,63 @@
-# 🚀 ACCA F4 Study App - Vercel Deployment Guide
+# 🚀 ACCA F4 Study App - Vercel Deployment Guide (with Claude Integration)
 
 ## ✅ Pre-Deployment Checklist
 
-Your app is **100% ready** for Vercel deployment! All necessary files are configured:
+Your app is **ready** for Vercel deployment with Claude AI integration:
 
-- ✅ `vercel.json` - Routing and build configuration
+- ✅ `vercel.json` - Routing and build configuration (updated for API routes)
+- ✅ `api/claude/enrich.js` - Serverless function for Claude API
 - ✅ `.vercelignore` - Excludes unnecessary files
 - ✅ `package.json` - Proper build scripts
 - ✅ `public/index.html` - SEO meta tags optimized
-- ✅ `public/manifest.json` - PWA configuration
-- ✅ `.gitignore` - Git exclusions
-- ✅ All React components optimized
+- ✅ All React components optimized with Claude integration
 - ✅ All data files (125 flashcards, 102 quiz questions, 19 chapters)
+
+---
+
+## 🔑 **CRITICAL: Set Environment Variables in Vercel**
+
+**Before deploying**, you MUST add your Claude API key to Vercel:
+
+### Method 1: Via Vercel Dashboard (Recommended)
+
+1. Go to [vercel.com](https://vercel.com) and sign in
+2. Navigate to your project (or create it first)
+3. Go to **Settings** → **Environment Variables**
+4. Add these variables:
+
+   ```
+   Name: CLAUDE_API_KEY
+   Value: your-anthropic-api-key-here
+   Environment: Production, Preview, Development (select all)
+   ```
+
+   Optional:
+   ```
+   Name: CLAUDE_MODEL
+   Value: claude-sonnet-4-20250514
+   Environment: Production, Preview, Development
+   ```
+
+5. Click **Save**
+
+### Method 2: Via Vercel CLI
+
+```bash
+cd /Users/bilyana/Downloads/.github-main/profile/acca-f4-study-app
+vercel env add CLAUDE_API_KEY
+# Paste your API key when prompted
+# Select: Production, Preview, Development
+
+# Optional: Set model
+vercel env add CLAUDE_MODEL
+# Enter: claude-sonnet-4-20250514
+```
 
 ---
 
 ## 📦 Quick Deployment Steps
 
-### Method 1: Deploy via Vercel CLI (Recommended)
+### Method 1: Deploy via Vercel CLI
 
 1. **Install Vercel CLI** (if not already installed):
    ```bash
@@ -51,7 +91,7 @@ Your app is **100% ready** for Vercel deployment! All necessary files are config
 
 ---
 
-### Method 2: Deploy via Vercel Dashboard (Easiest)
+### Method 2: Deploy via Vercel Dashboard
 
 1. **Go to [vercel.com](https://vercel.com)** and sign in
 
@@ -68,11 +108,13 @@ Your app is **100% ready** for Vercel deployment! All necessary files are config
    - **Output Directory**: `build` (auto-filled)
    - **Install Command**: `npm install` (auto-filled)
 
-5. **Click "Deploy"**
+5. **Add Environment Variables** (see section above)
 
-6. **Wait 2-3 minutes** for build to complete
+6. **Click "Deploy"**
 
-7. **Your app is live!** 🎉
+7. **Wait 2-3 minutes** for build to complete
+
+8. **Your app is live!** 🎉
 
 ---
 
@@ -80,6 +122,7 @@ Your app is **100% ready** for Vercel deployment! All necessary files are config
 
 After deployment, you'll get:
 - **Production**: `https://your-project-name.vercel.app`
+- **API Endpoint**: `https://your-project-name.vercel.app/api/claude/enrich`
 - **Custom Domain** (optional): You can add your own domain in Vercel settings
 
 ---
@@ -94,6 +137,7 @@ Your complete ACCA F4 study system includes:
 ✅ **Dashboard** - Chapter overview with priority ratings  
 ✅ **Progress Tracker** - Study completion monitoring  
 ✅ **Study Planner** - 12-week structured plan  
+✅ **Claude AI Integration** - On-demand chapter enrichment  
 ✅ **Responsive Design** - Works on mobile, tablet, desktop  
 ✅ **Bilingual** - English & Bulgarian support  
 
@@ -110,11 +154,31 @@ After deployment, test these features:
 5. ✅ **Quiz scoring** works correctly (max 20/20)
 6. ✅ **Language toggle** switches EN/BG
 7. ✅ **Routing** works (chapter links, back buttons)
-8. ✅ **Mobile responsive** - test on phone
+8. ✅ **Claude Enrichment** - Click "Enrich with Claude" on any chapter
+9. ✅ **Mobile responsive** - test on phone
 
 ---
 
 ## 🛠️ Troubleshooting
+
+### If Claude enrichment doesn't work:
+
+1. **Check Environment Variables**:
+   - Go to Vercel Dashboard → Settings → Environment Variables
+   - Verify `CLAUDE_API_KEY` is set for Production/Preview/Development
+   - Make sure there are no extra spaces or quotes
+
+2. **Check Function Logs**:
+   - Go to Vercel Dashboard → Your Project → Functions
+   - Click on `/api/claude/enrich`
+   - Check logs for errors
+
+3. **Test API Endpoint Directly**:
+   ```bash
+   curl https://your-app.vercel.app/api/claude/enrich \
+     -H "Content-Type: application/json" \
+     -d '{"chapterNumber":1,"summary":"Test summary","language":"en"}'
+   ```
 
 ### If build fails:
 
@@ -132,6 +196,7 @@ After deployment, test these features:
 
 - The `vercel.json` file handles this - it's already configured
 - All routes redirect to `index.html` for client-side routing
+- API routes (`/api/*`) are handled by serverless functions
 
 ### If data doesn't show:
 
@@ -148,6 +213,7 @@ After deployment, test these features:
 ✅ **CDN** - Global edge network for fast loading  
 ✅ **HTTPS** - Automatic SSL certificate  
 ✅ **Caching** - Optimized cache headers  
+✅ **Serverless Functions** - Auto-scaling API endpoints  
 
 ---
 
@@ -160,6 +226,7 @@ After deployment, test these features:
 - ✅ **Analytics** - Traffic and performance metrics
 - ✅ **100GB bandwidth/month** - More than enough for study app
 - ✅ **Unlimited sites** - Deploy as many projects as you want
+- ✅ **Serverless Functions** - 100GB-hours/month free tier
 
 ---
 
@@ -174,12 +241,16 @@ After deployment, test these features:
   45.67 KB   build/static/css/main.def456.css
   2.14 KB    build/static/js/runtime-main.789.js
 
+✓ Deploying serverless functions
+  ✓ api/claude/enrich.js
+
 ✓ Build completed successfully
 ```
 
 **Build time**: ~2-3 minutes  
 **App size**: ~160 KB (gzipped)  
-**Load time**: <1 second globally
+**Load time**: <1 second globally  
+**API latency**: ~2-5 seconds (Claude API response time)
 
 ---
 
@@ -199,17 +270,29 @@ After deployment, share your app:
 To update your deployed app:
 
 1. Make changes locally
-2. Test with `npm start`
+2. Test with `npm start` (and `npm run server` for local API testing)
 3. Commit to Git (if using Git integration)
 4. OR run `vercel --prod` to deploy manually
 
 Vercel will automatically rebuild and deploy!
+
+**Note**: If you update environment variables, you may need to redeploy for changes to take effect.
+
+---
+
+## 🔐 Security Notes
+
+- ✅ **API Key Security**: Never commit `.env` files to Git
+- ✅ **Environment Variables**: Stored securely in Vercel
+- ✅ **CORS**: Configured for your domain only
+- ✅ **HTTPS**: All traffic encrypted automatically
 
 ---
 
 ## 📞 Support
 
 - **Vercel Docs**: https://vercel.com/docs
+- **Vercel Functions**: https://vercel.com/docs/functions
 - **React Docs**: https://react.dev
 - **Support**: support@vercel.com
 
@@ -217,16 +300,17 @@ Vercel will automatically rebuild and deploy!
 
 ## 🎉 You're Ready to Deploy!
 
-Everything is configured perfectly. Just run:
+Everything is configured perfectly. Just:
 
-```bash
-cd /Users/bilyana/Downloads/.github-main/profile/acca-f4-study-app
-vercel
-```
+1. **Set environment variables** in Vercel (see section above)
+2. Run:
+   ```bash
+   cd /Users/bilyana/Downloads/.github-main/profile/acca-f4-study-app
+   vercel --prod
+   ```
 
-**Your ACCA F4 study system will be live in 3 minutes!** 🚀
+**Your ACCA F4 study system with Claude AI will be live in 3 minutes!** 🚀
 
 ---
 
 **Good luck with your ACCA F4 exam!** 📚⚖️✨
-

@@ -49,18 +49,53 @@ A beautiful, user-friendly React application for studying ACCA F4 Corporate and 
 - Study tips
 - Quick action buttons
 
+### 🤖 **AI-Powered Enrichment**
+- Claude integration expands each summary on demand
+- Focused examiner tips, case references, and self-test prompts
+- Works in both English and Bulgarian, respecting the chapter language
+
 ---
 
 ## 🚀 How to Use
 
-### **Starting the App:**
+### **1. Install Dependencies**
+
+```bash
+cd acca-f4-study-app
+npm install
+```
+
+### **2. Configure Claude Access**
+
+Create a `.env` file in `acca-f4-study-app/` (same folder as `package.json`) and add:
+
+```bash
+CLAUDE_API_KEY=your_anthropic_key_here
+# Optional overrides:
+# PORT=5001
+# CLIENT_ORIGIN=http://localhost:3000
+# CLAUDE_MODEL=claude-3-5-sonnet-20241022
+```
+
+> ⚠️ Never hard-code the API key in React files or commit it to Git. Keep it in the `.env` file or your deployment secret manager.
+
+### **3. Start the Claude Proxy (Terminal #1)**
+
+```bash
+cd acca-f4-study-app
+npm run server
+```
+
+This boots the secure Express proxy on `http://localhost:5001`.
+
+### **4. Start the React App (Terminal #2)**
 
 ```bash
 cd acca-f4-study-app
 npm start
 ```
 
-The app will open at `http://localhost:3000`
+The frontend opens at `http://localhost:3000` and automatically proxies `/api/claude/*` requests to the backend.
 
 ### **Building for Production:**
 
@@ -164,6 +199,11 @@ Each PDF includes:
 
 ## 🐛 Troubleshooting
 
+**Claude call returns 500?**
+- Confirm `CLAUDE_API_KEY` is present in `.env`
+- Check that the proxy server in Terminal #1 has not crashed
+- Review console output for Anthropic error messages (rate limits, quota, etc.)
+
 **Port already in use?**
 ```bash
 # Kill the process on port 3000
@@ -232,4 +272,6 @@ Based on BPP ACCA F4 Workbook 2023-2024.
 **Version:** 1.0.0  
 **React Version:** 18.x  
 **Status:** ✅ Production Ready
+
+
 
