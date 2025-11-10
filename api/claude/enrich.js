@@ -3,7 +3,7 @@ const axios = require('axios');
 module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   // Handle preflight requests
@@ -11,7 +11,19 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
-  // Only allow POST requests
+  // Health check endpoint
+  if (req.method === 'GET') {
+    const apiKey = process.env.CLAUDE_API_KEY;
+    return res.json({
+      status: 'ok',
+      service: 'acca-f4-claude-proxy',
+      apiKeyConfigured: !!apiKey,
+      model: process.env.CLAUDE_MODEL || 'claude-sonnet-4-20250514',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // Only allow POST requests for enrichment
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -19,7 +31,11 @@ module.exports = async (req, res) => {
   const apiKey = process.env.CLAUDE_API_KEY;
 
   if (!apiKey) {
-    return res.status(500).json({ error: 'Claude API key is not configured on the server.' });
+    console.error('[ERROR] Claude API key is not configured');
+    return res.status(500).json({ 
+      error: 'Claude API key is not configured on the server.',
+      hint: 'Please set CLAUDE_API_KEY environment variable in Vercel dashboard.'
+    });
   }
 
   const { chapterNumber, summary, language = 'en' } = req.body || {};
@@ -55,6 +71,7 @@ module.exports = async (req, res) => {
   ].join('\n');
 
   try {
+    console.log('[INFO] Calling Claude API with model:', model);
     const { data } = await axios.post(
       'https://api.anthropic.com/v1/messages',
       {
@@ -93,20 +110,29 @@ module.exports = async (req, res) => {
       : '';
 
     if (!enrichment) {
+      console.error('[ERROR] Claude API returned empty response');
       return res.status(502).json({ error: 'Claude API returned an empty response.' });
     }
 
+    console.log('[SUCCESS] Claude enrichment completed');
     res.json({ enrichment });
   } catch (error) {
-    console.error('[Claude Proxy] Request failed:', error?.response?.data || error.message);
+    console.error('[ERROR] Claude API request failed:', {
+      message: error.message,
+      status: error?.response?.status,
+      data: error?.response?.data
+    });
 
     const status = error?.response?.status || 500;
     const message =
       error?.response?.data?.error?.message ||
       error?.response?.data?.message ||
+      error.message ||
       'Unable to retrieve enrichment from Claude at this time.';
 
-    res.status(status).json({ error: message });
+    res.status(status).json({ 
+      error: message,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
-

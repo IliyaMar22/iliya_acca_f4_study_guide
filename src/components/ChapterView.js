@@ -60,13 +60,16 @@ const ChapterView = ({ language }) => {
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
-        throw new Error(errorBody?.error || 'Claude enrichment failed');
+        const errorMessage = errorBody?.error || `HTTP ${response.status}: ${response.statusText}`;
+        console.error('Claude API error:', errorBody);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
       setAiEnrichment(data.enrichment || '');
     } catch (error) {
-      setAiError(error.message || 'Unknown error');
+      console.error('Claude enrichment error:', error);
+      setAiError(error.message || 'Unknown error. Check browser console for details.');
     } finally {
       setAiLoading(false);
     }
